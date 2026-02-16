@@ -16,10 +16,10 @@ RUN git clone --depth 1 --branch "${OPENCLAW_REF}" "${OPENCLAW_REPO}" .
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Build
+# Build TypeScript + A2UI + hook metadata + build-info
 RUN OPENCLAW_A2UI_SKIP_MISSING=1 pnpm build
 
-# Force pnpm for UI build (Bun may fail on ARM architectures)
+# Build Control UI (output goes to dist/control-ui/)
 ENV OPENCLAW_PREFER_PNPM=1
 RUN pnpm ui:install
 RUN pnpm ui:build
@@ -37,11 +37,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Copy built application from builder
+# dist/ contains: compiled JS, control-ui, canvas-host/a2ui, hooks metadata, build-info
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/ui/dist ./ui/dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/extensions ./extensions
 
 ENV NODE_ENV=production
 
