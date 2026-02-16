@@ -11,12 +11,28 @@ set -euo pipefail
 VPS_IP="${VPS_IP:-76.13.36.58}"
 VPS_USER="${VPS_USER:-openclaw}"
 
+# Load .env from repo root to get gateway token
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(dirname "${SCRIPT_DIR}")"
+
+# Try to read gateway token from VPS .env via SSH
+GATEWAY_TOKEN=""
+REMOTE_TOKEN=$(ssh -o ConnectTimeout=5 "${VPS_USER}@${VPS_IP}" \
+  'grep OPENCLAW_GATEWAY_TOKEN ~/openclaw-vps/.env 2>/dev/null | cut -d= -f2' 2>/dev/null || true)
+if [[ -n "${REMOTE_TOKEN}" ]]; then
+  GATEWAY_TOKEN="${REMOTE_TOKEN}"
+fi
+
 echo "=== OpenClaw VPS Tunnel ==="
 echo ""
 echo "Connecting to ${VPS_USER}@${VPS_IP}..."
 echo ""
 echo "Forwarded ports:"
-echo "  Gateway UI : http://localhost:18789"
+if [[ -n "${GATEWAY_TOKEN}" ]]; then
+  echo "  Dashboard  : http://localhost:18789/?token=${GATEWAY_TOKEN}"
+else
+  echo "  Gateway UI : http://localhost:18789"
+fi
 echo "  Bridge     : ws://localhost:18790"
 echo "  noVNC      : http://localhost:6080"
 echo ""

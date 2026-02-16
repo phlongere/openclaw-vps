@@ -76,6 +76,7 @@ SYSCTL
 echo "[5/7] Creating persistent directories..."
 mkdir -p "${OPENCLAW_HOME}/.openclaw"
 mkdir -p "${OPENCLAW_HOME}/.openclaw/workspace"
+mkdir -p "${OPENCLAW_HOME}/.openclaw/agents/main/agent"
 # Container runs as uid 1000 (node user)
 chown -R 1000:1000 "${OPENCLAW_HOME}/.openclaw"
 
@@ -113,6 +114,12 @@ OPENCLAW_GATEWAY_PORT=18789
 OPENCLAW_BRIDGE_PORT=18790
 OPENCLAW_CONFIG_DIR=${OPENCLAW_HOME}/.openclaw
 OPENCLAW_WORKSPACE_DIR=${OPENCLAW_HOME}/.openclaw/workspace
+
+# === User config (set before running deploy.sh) ===
+OPENCLAW_AGENT_NAME=Assistant
+OPENAI_API_KEY=change-me
+TELEGRAM_BOT_TOKEN=change-me
+TELEGRAM_ALLOWED_USER=change-me
 EOF
   chown "${OPENCLAW_USER}:${OPENCLAW_USER}" "${ENV_FILE}"
   echo ""
