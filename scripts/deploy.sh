@@ -42,8 +42,8 @@ docker compose up -d
 
 # 4) Configure gateway if not yet configured
 echo "[4/5] Checking gateway config..."
-sleep 3
-if docker compose logs --tail 5 openclaw-gateway 2>&1 | grep -q "Missing config"; then
+sleep 5
+if docker compose logs --tail 10 openclaw-gateway 2>&1 | grep -q "Missing config"; then
   echo "  First-time setup: configuring gateway..."
   docker compose run --rm openclaw-gateway node dist/index.js config set gateway.mode local
   docker compose run --rm openclaw-gateway node dist/index.js config set gateway.auth.mode token
