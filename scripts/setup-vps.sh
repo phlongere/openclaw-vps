@@ -14,8 +14,15 @@ echo ""
 
 # 1) System update + base packages
 echo "[1/7] Updating system and installing base packages..."
-apt-get update -qq
-DEBIAN_FRONTEND=noninteractive apt-get upgrade -y -qq
+
+# Fix corrupted apt-show-versions hook (common on Hostinger templates)
+if [[ -f /usr/bin/apt-show-versions ]] && ! apt-show-versions --version &>/dev/null; then
+  echo "  Fixing broken apt-show-versions..."
+  dpkg --remove --force-depends apt-show-versions 2>/dev/null || true
+fi
+
+apt-get update -qq || true
+DEBIAN_FRONTEND=noninteractive apt-get upgrade -y -qq || true
 DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
   ca-certificates curl git ufw sudo openssh-server
 
@@ -55,7 +62,11 @@ echo "[4/7] Installing Docker..."
 if command -v docker &>/dev/null; then
   echo "  Docker already installed: $(docker --version)"
 else
-  curl -fsSL https://get.docker.com | sh
+  curl -fsSL https://get.docker.com | sh || {
+    echo "  Docker install script had errors, retrying apt..."
+    apt-get update -qq || true
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  }
   echo "  Docker installed: $(docker --version)"
 fi
 usermod -aG docker "${OPENCLAW_USER}"
