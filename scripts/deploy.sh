@@ -40,10 +40,10 @@ docker compose build openclaw-sandbox-browser
 # 3) Generate openclaw.json config
 echo "[3/6] Generating config files..."
 
-mkdir -p "${AGENT_DIR}"
+sudo mkdir -p "${AGENT_DIR}"
 
 # openclaw.json - main config (no secrets, uses env var substitution)
-cat > "${CONFIG_DIR}/openclaw.json" <<OCJSON
+sudo tee "${CONFIG_DIR}/openclaw.json" > /dev/null <<OCJSON
 {
   "gateway": {
     "port": 18789,
@@ -94,7 +94,7 @@ cat > "${CONFIG_DIR}/openclaw.json" <<OCJSON
 OCJSON
 
 # auth-profiles.json - secrets (API keys)
-cat > "${AGENT_DIR}/auth-profiles.json" <<AUTHJSON
+sudo tee "${AGENT_DIR}/auth-profiles.json" > /dev/null <<AUTHJSON
 {
   "version": 1,
   "profiles": {
