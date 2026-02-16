@@ -36,13 +36,25 @@ echo "[2/4] Building sandbox-browser image..."
 docker compose build openclaw-sandbox-browser
 
 # 3) Stop existing containers (if any)
-echo "[3/4] Restarting containers..."
+echo "[3/5] Restarting containers..."
 docker compose down --remove-orphans 2>/dev/null || true
 docker compose up -d
 
-# 4) Health check
-echo "[4/4] Waiting for gateway to start..."
+# 4) Configure gateway if not yet configured
+echo "[4/5] Checking gateway config..."
 sleep 3
+if docker compose logs --tail 5 openclaw-gateway 2>&1 | grep -q "Missing config"; then
+  echo "  First-time setup: configuring gateway..."
+  docker compose run --rm openclaw-gateway node dist/index.js config set gateway.mode local
+  docker compose run --rm openclaw-gateway node dist/index.js config set gateway.auth.mode token
+  docker compose run --rm openclaw-gateway node dist/index.js config set gateway.auth.token "${OPENCLAW_GATEWAY_TOKEN}"
+  echo "  Restarting gateway with new config..."
+  docker compose restart openclaw-gateway
+  sleep 3
+fi
+
+# 5) Health check
+echo "[5/5] Verifying gateway..."
 
 if docker compose ps --format json | grep -q '"running"'; then
   echo ""

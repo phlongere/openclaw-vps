@@ -31,6 +31,10 @@ else
   echo "  User created."
 fi
 
+# Passwordless sudo for openclaw user
+echo "${OPENCLAW_USER} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${OPENCLAW_USER}
+chmod 440 /etc/sudoers.d/${OPENCLAW_USER}
+
 # 3) Copy SSH authorized keys from root to new user
 echo "[3/7] Setting up SSH keys..."
 OPENCLAW_HOME="/home/${OPENCLAW_USER}"
@@ -59,6 +63,14 @@ usermod -aG docker "${OPENCLAW_USER}"
 # Ensure Docker starts on boot
 systemctl enable docker
 systemctl start docker
+
+# Disable IPv6 (workaround for Hostinger <-> GHCR connectivity issues)
+sysctl -w net.ipv6.conf.all.disable_ipv6=1
+sysctl -w net.ipv6.conf.default.disable_ipv6=1
+grep -q 'disable_ipv6' /etc/sysctl.conf || cat >> /etc/sysctl.conf <<'SYSCTL'
+net.ipv6.conf.all.disable_ipv6=1
+net.ipv6.conf.default.disable_ipv6=1
+SYSCTL
 
 # 5) Create persistent directories
 echo "[5/7] Creating persistent directories..."
