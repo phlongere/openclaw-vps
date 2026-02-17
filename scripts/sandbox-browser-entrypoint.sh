@@ -25,6 +25,7 @@ else
   CHROME_ARGS=()
 fi
 
+# Chrome internal port (socat proxies external CDP_PORT -> this)
 if [[ "${CDP_PORT}" -ge 65535 ]]; then
   CHROME_CDP_PORT="$((CDP_PORT - 1))"
 else
@@ -34,6 +35,7 @@ fi
 CHROME_ARGS+=(
   "--remote-debugging-address=127.0.0.1"
   "--remote-debugging-port=${CHROME_CDP_PORT}"
+  "--remote-allow-origins=*"
   "--user-data-dir=${HOME}/.chrome"
   "--no-first-run"
   "--no-default-browser-check"
@@ -55,6 +57,7 @@ for _ in $(seq 1 50); do
   sleep 0.1
 done
 
+# Proxy CDP externally so other containers can reach it via Docker DNS
 socat \
   TCP-LISTEN:"${CDP_PORT}",fork,reuseaddr,bind=0.0.0.0 \
   TCP:127.0.0.1:"${CHROME_CDP_PORT}" &
