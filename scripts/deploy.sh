@@ -26,6 +26,13 @@ IMAGE="${OPENCLAW_IMAGE:-ghcr.io/phlongere/openclaw-vps:latest}"
 CONFIG_DIR="${OPENCLAW_CONFIG_DIR:-/home/openclaw/.openclaw}"
 AGENT_DIR="${CONFIG_DIR}/agents/main/agent"
 
+# Auto-generate gateway token if not set or still default
+if [[ -z "${OPENCLAW_GATEWAY_TOKEN:-}" ]] || [[ "${OPENCLAW_GATEWAY_TOKEN}" == "change-me" ]]; then
+  OPENCLAW_GATEWAY_TOKEN=$(openssl rand -hex 32)
+  sed -i "s|^OPENCLAW_GATEWAY_TOKEN=.*|OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN}|" .env
+  echo "Generated gateway token: ${OPENCLAW_GATEWAY_TOKEN:0:8}..."
+fi
+
 echo "=== OpenClaw VPS Deploy ==="
 echo ""
 
