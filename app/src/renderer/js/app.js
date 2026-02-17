@@ -58,9 +58,12 @@ async function init() {
     }
   }
 
-  // Show Connect button if we have a previous deployment (token + IP)
+  // Show Connect button + reset link if we have a previous deployment
   if (merged.gatewayToken && merged.vpsIp) {
     $('#btn-connect').style.display = 'flex';
+    $('#btn-reset-config').style.display = '';
+  } else {
+    $('#btn-reset-config').style.display = 'none';
   }
 }
 
