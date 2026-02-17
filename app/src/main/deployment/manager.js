@@ -54,10 +54,11 @@ class DeploymentManager {
   }
 
   async deploy(config) {
-    const { vpsIp, rootPassword, agentName, llmProvider, apiKey, telegramToken, telegramUserId, skipSetup, hostingerApiToken } = config;
+    const { vpsIp, rootPassword, agentName, llmProvider, apiKey, telegramToken, telegramUserId, installMode, hostingerApiToken } = config;
+    // installMode: 'full' = provision + deploy, 'snapshot' = restore + deploy, 'deploy-only' = just deploy
 
-    // If skipSetup, restore from snapshot first
-    if (skipSetup && hostingerApiToken) {
+    // If snapshot mode, restore from snapshot first
+    if (installMode === 'snapshot' && hostingerApiToken) {
       await this.restoreSnapshot(hostingerApiToken, vpsIp);
     }
 
@@ -70,11 +71,15 @@ class DeploymentManager {
         this.log('SSH connection established');
       });
 
-      // Step 2: Provision VPS (skip if restoring from snapshot)
+      // Step 2: Provision VPS
       await this.runStep(1, async () => {
-        if (skipSetup) {
-          this.log('Skipping provisioning (restored from snapshot)');
-          this.log('Running post-snapshot setup only (user, repo, firewall)...');
+        if (installMode === 'deploy-only') {
+          this.log('Skipping provisioning (deploy only mode)');
+          return;
+        }
+
+        if (installMode === 'snapshot') {
+          this.log('Running post-snapshot setup (user, repo, firewall)...');
           // Only run the parts of setup that aren't in the snapshot (user creation, repo clone)
           const postSnapshotScript = `
 set -e

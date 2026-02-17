@@ -93,7 +93,7 @@ $('#config-form').addEventListener('submit', async (e) => {
 
   const form = new FormData(e.target);
   currentConfig = Object.fromEntries(form.entries());
-  currentConfig.skipSetup = !!form.get('skipSetup');
+  // installMode: 'deploy-only' | 'full' | 'snapshot'
 
   // Save credentials for next time
   try {
