@@ -1,6 +1,9 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('openclaw', {
+  config: {
+    devDefaults: () => ipcRenderer.invoke('config:devDefaults')
+  },
   credentials: {
     save: (data) => ipcRenderer.invoke('credentials:save', data),
     load: () => ipcRenderer.invoke('credentials:load'),

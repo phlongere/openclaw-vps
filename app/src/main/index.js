@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, safeStorage } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const { DeploymentManager } = require('./deployment/manager');
 const { SSHTunnel } = require('./ssh/tunnel');
 const { CredentialStore } = require('./credentials/store');
@@ -33,6 +34,31 @@ app.whenReady().then(createWindow);
 app.on('window-all-closed', () => {
   if (activeTunnel) activeTunnel.disconnect();
   app.quit();
+});
+
+// ── Dev Defaults (from .env.dev if present) ──
+ipcMain.handle('config:devDefaults', async () => {
+  const envPath = path.resolve(__dirname, '..', '..', '..', '.env.dev');
+  if (!fs.existsSync(envPath)) return null;
+  const lines = fs.readFileSync(envPath, 'utf-8').split('\n');
+  const env = {};
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eq = trimmed.indexOf('=');
+    if (eq < 0) continue;
+    env[trimmed.slice(0, eq)] = trimmed.slice(eq + 1);
+  }
+  return {
+    vpsIp: env.VPS_IP || '',
+    rootPassword: env.ROOT_PASSWORD || '',
+    hostingerApiToken: env.HOSTINGER_API_TOKEN || '',
+    agentName: env.AGENT_NAME || '',
+    llmProvider: env.LLM_PROVIDER || '',
+    apiKey: env.API_KEY || '',
+    telegramToken: env.TELEGRAM_TOKEN || '',
+    telegramUserId: env.TELEGRAM_USER_ID || ''
+  };
 });
 
 // ── Credentials ──

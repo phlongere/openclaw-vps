@@ -5,12 +5,12 @@ const $$ = (sel) => document.querySelectorAll(sel);
 
 let currentConfig = {};
 
-// ── Default values (dev/test) ──
-const DEFAULTS = {
-  vpsIp: '76.13.36.58',
-  rootPassword: 'OpenClaw2024-Vps',
-  hostingerApiToken: 'F0HKzLd1gWMXDHIvI8BmWSeriMn2bYDGLdnNMk0xfb20dfdb',
-  agentName: 'Ursula',
+// ── Default values (loaded from .env.dev if present, otherwise empty) ──
+let DEFAULTS = {
+  vpsIp: '',
+  rootPassword: '',
+  hostingerApiToken: '',
+  agentName: '',
   llmProvider: 'openai',
   apiKey: '',
   telegramToken: '',
@@ -25,6 +25,16 @@ function showView(id) {
 
 // ── Init: Load saved credentials or defaults ──
 async function init() {
+  // Load dev defaults from .env.dev (if present)
+  try {
+    const devDefaults = await window.openclaw.config.devDefaults();
+    if (devDefaults) {
+      DEFAULTS = { ...DEFAULTS, ...Object.fromEntries(
+        Object.entries(devDefaults).filter(([, v]) => v)
+      )};
+    }
+  } catch {}
+
   let saved = {};
   try {
     saved = await window.openclaw.credentials.load() || {};
@@ -32,7 +42,7 @@ async function init() {
     console.warn('Could not load credentials:', err);
   }
 
-  // Merge: saved values take priority over defaults
+  // Merge: saved values take priority over dev defaults
   const merged = { ...DEFAULTS, ...Object.fromEntries(
     Object.entries(saved).filter(([, v]) => v)
   )};
