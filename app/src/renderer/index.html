@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src *; frame-src http://127.0.0.1:*">
+  <title>KryllBot Deployer</title>
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+
+  <!-- Shared robot SVG (hidden, cloned via JS) -->
+  <template id="robot-svg">
+    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="robot-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#9B7BC7"/>
+          <stop offset="100%" stop-color="#6B4E9B"/>
+        </linearGradient>
+        <linearGradient id="k-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#5FFFDA"/>
+          <stop offset="100%" stop-color="#00D9A5"/>
+        </linearGradient>
+      </defs>
+      <style>
+        .r-head { animation: r-float 3s ease-in-out infinite; transform-origin: center; }
+        .r-eye { animation: r-blink 4s ease-in-out infinite; }
+        .r-chest { animation: r-pulse 2s ease-in-out infinite; }
+        .r-arm-l { animation: r-wave-l 2s ease-in-out infinite; transform-origin: 38px 62px; }
+        .r-arm-r { animation: r-wave-r 2s ease-in-out infinite; transform-origin: 82px 62px; }
+        @keyframes r-float { 0%, 100% { transform: translateY(8px); } 50% { transform: translateY(2px); } }
+        @keyframes r-blink { 0%, 45%, 55%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        @keyframes r-pulse { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; filter: drop-shadow(0 0 6px #5FFFDA); } }
+        @keyframes r-wave-l { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-5deg); } }
+        @keyframes r-wave-r { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(5deg); } }
+      </style>
+      <path d="M38 62 L28 65 C24 66 22 70 23 74 L25 80 C26 83 30 84 33 82 L38 78" fill="url(#robot-gradient)" class="r-arm-l"/>
+      <path d="M82 62 L92 65 C96 66 98 70 97 74 L95 80 C94 83 90 84 87 82 L82 78" fill="url(#robot-gradient)" class="r-arm-r"/>
+      <path d="M45 95 L45 105 C45 108 47 110 50 110 L54 110 C57 110 58 108 58 105 L58 95" fill="url(#robot-gradient)"/>
+      <path d="M62 95 L62 105 C62 108 63 110 66 110 L70 110 C73 110 75 108 75 105 L75 95" fill="url(#robot-gradient)"/>
+      <rect x="38" y="55" width="44" height="42" rx="8" fill="url(#robot-gradient)"/>
+      <g class="r-chest" transform="translate(38, 54) scale(0.11)">
+        <path d="M119.396 223.792V277.656C119.395 285.711 128.072 294.544 140.284 294.544C155.546 294.544 155.548 294.542 169.201 277.66L169.205 277.656C171.146 275.256 175.675 269.606 181.94 261.79C185.714 257.082 190.118 251.588 194.965 245.546L251.149 290.537C269.626 304.202 291.689 273.649 281.677 261.588C268.351 245.54 249.796 222.685 231.543 200.064C249.796 177.443 268.352 154.587 281.678 138.54C291.318 126.931 272.037 92.7177 251.149 109.591C240.342 118.321 215.983 137.824 194.991 154.614C190.133 148.559 185.72 143.054 181.939 138.337C175.674 130.522 171.145 124.871 169.204 122.472L169.201 122.467C155.547 105.585 155.546 105.583 140.283 105.583C128.072 105.583 119.395 116.841 119.395 122.472L119.396 223.792Z" fill="url(#k-gradient)"/>
+      </g>
+      <g class="r-head">
+        <ellipse cx="60" cy="32" rx="28" ry="24" fill="url(#robot-gradient)"/>
+        <rect x="38" y="22" width="44" height="22" rx="8" fill="#1a1a2e"/>
+        <path d="M46 32 Q50 28 54 32" stroke="#5FFFDA" stroke-width="3" stroke-linecap="round" fill="none" class="r-eye"/>
+        <path d="M66 32 Q70 28 74 32" stroke="#5FFFDA" stroke-width="3" stroke-linecap="round" fill="none" class="r-eye"/>
+        <circle cx="52" cy="15" r="1.2" fill="#5FFFDA" class="r-chest"/>
+        <circle cx="60" cy="15" r="1.2" fill="#5FFFDA" class="r-chest"/>
+        <circle cx="68" cy="15" r="1.2" fill="#5FFFDA" class="r-chest"/>
+      </g>
+    </svg>
+  </template>
+
+  <!-- ==================== SCREEN 1: CONFIG ==================== -->
+  <div id="view-config" class="view active">
+    <div class="drag-region"></div>
+    <div class="split-layout">
+      <div class="split-left">
+        <div class="robot-panel" id="robot-config"></div>
+        <h1 class="brand-title">KryllBot Deployer</h1>
+        <p class="brand-subtitle">Deploy your KryllBot to a VPS in one click</p>
+      </div>
+      <div class="split-right">
+        <form id="config-form" autocomplete="off">
+          <div class="form-section">
+            <div class="section-header">
+              <span class="section-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              </span>
+              <h2>VPS Connection</h2>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>IP Address</label>
+                <input type="text" name="vpsIp" value="76.13.36.58" required>
+              </div>
+              <div class="form-group">
+                <label>Root Password</label>
+                <input type="password" name="rootPassword" value="OpenClaw2024-Vps" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Hostinger API Token <span class="optional-tag">optional</span></label>
+              <input type="password" name="hostingerApiToken" value="F0HKzLd1gWMXDHIvI8BmWSeriMn2bYDGLdnNMk0xfb20dfdb">
+            </div>
+            <label class="checkbox-row">
+              <input type="checkbox" name="skipSetup" checked>
+              <span class="checkmark"></span>
+              <span class="checkbox-label">Skip initial setup <span class="optional-tag">restore from snapshot</span></span>
+            </label>
+          </div>
+
+          <div class="form-section">
+            <div class="section-header">
+              <span class="section-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              </span>
+              <h2>AI Agent</h2>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Agent Name</label>
+                <input type="text" name="agentName" value="Ursula" required>
+              </div>
+              <div class="form-group">
+                <label>LLM Provider</label>
+                <select name="llmProvider" required>
+                  <option value="openai">OpenAI</option>
+                  <option value="anthropic">Anthropic</option>
+                  <option value="openrouter">OpenRouter</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>API Key</label>
+              <input type="password" name="apiKey" value="" required>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="section-header">
+              <span class="section-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </span>
+              <h2>Telegram</h2>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Bot Token</label>
+                <input type="password" name="telegramToken" value="" required>
+              </div>
+              <div class="form-group">
+                <label>Your User ID</label>
+                <input type="text" name="telegramUserId" value="409024423" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button type="submit" class="btn-deploy">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              Deploy
+            </button>
+            <button type="button" class="btn-connect" id="btn-connect" style="display:none">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              Connect
+            </button>
+          </div>
+          <div class="form-footer">
+            <a href="#" class="link-reset" id="btn-reset-config">Reset saved config</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SCREEN 2: PROGRESS ==================== -->
+  <div id="view-progress" class="view">
+    <div class="drag-region"></div>
+    <div class="split-layout">
+      <div class="split-left">
+        <div class="robot-panel" id="robot-progress"></div>
+        <h1 class="brand-title">Installing your KryllBot</h1>
+        <p class="brand-subtitle" id="progress-subtitle">Setting things up...</p>
+      </div>
+      <div class="split-right">
+        <div class="pipeline" id="pipeline"></div>
+
+        <div class="log-panel">
+          <div class="log-header">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+            <span>Output</span>
+          </div>
+          <div class="log-output" id="log-output"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SCREEN 3: DASHBOARD ==================== -->
+  <div id="view-dashboard" class="view">
+    <div class="dashboard-toolbar">
+      <div class="toolbar-left">
+        <div class="toolbar-robot" id="robot-dashboard"></div>
+        <div class="status-dot" id="status-dot"></div>
+        <span class="toolbar-label" id="toolbar-agent">-</span>
+        <span class="toolbar-separator">|</span>
+        <span class="toolbar-label toolbar-dim" id="toolbar-ip">-</span>
+      </div>
+      <div class="toolbar-right">
+        <button class="toolbar-btn" id="btn-dashboard" title="Back to Dashboard" style="display:none">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Dashboard
+        </button>
+        <button class="toolbar-btn" id="btn-novnc" title="Browser Sandbox">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          noVNC
+        </button>
+        <button class="toolbar-btn" id="btn-logs" title="View Logs">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          Logs
+        </button>
+        <button class="toolbar-btn" id="btn-reconnect" title="Reconnect Tunnel">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Reconnect
+        </button>
+        <button class="toolbar-btn toolbar-btn-dim" id="btn-settings" title="Settings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </div>
+    <webview id="dashboard-webview" src="about:blank" style="width:100%; height:calc(100vh - 48px);" allowpopups></webview>
+  </div>
+
+  <script>
+    // Clone robot SVG into each panel
+    document.querySelectorAll('.robot-panel').forEach(el => {
+      el.appendChild(document.getElementById('robot-svg').content.cloneNode(true));
+    });
+    document.querySelectorAll('.toolbar-robot').forEach(el => {
+      el.appendChild(document.getElementById('robot-svg').content.cloneNode(true));
+    });
+  </script>
+  <script src="js/app.js"></script>
+</body>
+</html>

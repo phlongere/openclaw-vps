@@ -1,0 +1,27 @@
+{
+  "name": "kryllbot-deployer",
+  "version": "1.0.0",
+  "description": "Deploy KryllBot to a VPS in one click",
+  "main": "src/main/index.js",
+  "scripts": {
+    "start": "electron .",
+    "make": "electron-builder --mac"
+  },
+  "dependencies": {
+    "ssh2": "^1.16.0",
+    "electron-store": "^8.2.0"
+  },
+  "devDependencies": {
+    "electron": "^28.2.10",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "io.kryll.bot.deployer",
+    "productName": "KryllBot Deployer",
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": ["dmg", "zip"]
+    },
+    "files": ["src/**/*", "node_modules/**/*"]
+  }
+}
