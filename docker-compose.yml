@@ -1,20 +1,20 @@
 services:
-  openclaw-gateway:
-    image: ${OPENCLAW_IMAGE:-ghcr.io/phlongere/openclaw-vps:latest}
+  kryllbot-gateway:
+    image: ${KRYLLBOT_IMAGE:-ghcr.io/phlongere/openclaw-vps:latest}
     environment:
       HOME: /home/node
       TERM: xterm-256color
-      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN}
+      KRYLLBOT_GATEWAY_TOKEN: ${KRYLLBOT_GATEWAY_TOKEN}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       TELEGRAM_ALLOWED_USER: ${TELEGRAM_ALLOWED_USER:-}
     volumes:
-      - ${OPENCLAW_CONFIG_DIR:-/home/openclaw/.openclaw}:/home/node/.openclaw
-      - ${OPENCLAW_WORKSPACE_DIR:-/home/openclaw/.openclaw/workspace}:/home/node/.openclaw/workspace
-      - openclaw-cache:/home/node/.cache
+      - ${KRYLLBOT_CONFIG_DIR:-/home/kryllbot/.openclaw}:/home/node/.openclaw
+      - ${KRYLLBOT_WORKSPACE_DIR:-/home/kryllbot/.openclaw/workspace}:/home/node/.openclaw/workspace
+      - kryllbot-cache:/home/node/.cache
     ports:
-      - "127.0.0.1:${OPENCLAW_GATEWAY_PORT:-18789}:18789"
-      - "127.0.0.1:${OPENCLAW_BRIDGE_PORT:-18790}:18790"
+      - "127.0.0.1:${KRYLLBOT_GATEWAY_PORT:-18789}:18789"
+      - "127.0.0.1:${KRYLLBOT_BRIDGE_PORT:-18790}:18790"
     init: true
     restart: unless-stopped
     command:
@@ -23,13 +23,13 @@ services:
         "dist/index.js",
         "gateway",
         "--bind",
-        "${OPENCLAW_GATEWAY_BIND:-lan}",
+        "${KRYLLBOT_GATEWAY_BIND:-lan}",
         "--port",
         "18789",
       ]
 
-  openclaw-sandbox-browser:
-    image: openclaw-sandbox-browser:bookworm-slim
+  kryllbot-sandbox-browser:
+    image: kryllbot-sandbox-browser:bookworm-slim
     build:
       context: .
       dockerfile: Dockerfile.sandbox-browser
@@ -41,4 +41,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  openclaw-cache:
+  kryllbot-cache:

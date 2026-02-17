@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SSH tunnel to OpenClaw VPS
+# SSH tunnel to KryllBot VPS
 # Opens port forwards for Gateway UI, Bridge, and noVNC (browser sandbox)
 #
 # Usage:
@@ -9,7 +9,7 @@
 set -euo pipefail
 
 VPS_IP="${VPS_IP:-76.13.36.58}"
-VPS_USER="${VPS_USER:-openclaw}"
+VPS_USER="${VPS_USER:-kryllbot}"
 
 # Load .env from repo root to get gateway token
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -18,12 +18,12 @@ ROOT_DIR="$(dirname "${SCRIPT_DIR}")"
 # Try to read gateway token from VPS .env via SSH
 GATEWAY_TOKEN=""
 REMOTE_TOKEN=$(ssh -o ConnectTimeout=5 "${VPS_USER}@${VPS_IP}" \
-  'grep OPENCLAW_GATEWAY_TOKEN ~/openclaw-vps/.env 2>/dev/null | cut -d= -f2' 2>/dev/null || true)
+  'grep KRYLLBOT_GATEWAY_TOKEN ~/kryllbot-vps/.env 2>/dev/null | cut -d= -f2' 2>/dev/null || true)
 if [[ -n "${REMOTE_TOKEN}" ]]; then
   GATEWAY_TOKEN="${REMOTE_TOKEN}"
 fi
 
-echo "=== OpenClaw VPS Tunnel ==="
+echo "=== KryllBot VPS Tunnel ==="
 echo ""
 echo "Connecting to ${VPS_USER}@${VPS_IP}..."
 echo ""

@@ -14,7 +14,7 @@
 #   OPENAI_API_KEY       - OpenAI API key (for deploy config)
 #   TELEGRAM_BOT_TOKEN   - Telegram bot token (for deploy config)
 #   TELEGRAM_ALLOWED_USER - Telegram user ID (for deploy config)
-#   OPENCLAW_AGENT_NAME  - Agent display name (default: Assistant)
+#   KRYLLBOT_AGENT_NAME  - Agent display name (default: Assistant)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -48,7 +48,7 @@ if [[ -z "${VPS_ID:-}" ]] || [[ -z "${VPS_IP:-}" ]]; then
 fi
 
 echo ""
-echo "=== OpenClaw VPS Full Reset ==="
+echo "=== KryllBot VPS Full Reset ==="
 echo ""
 
 # 1) Recreate VPS
@@ -132,16 +132,16 @@ fi
 
 ssh -o StrictHostKeyChecking=no "root@${VPS_IP}" 'bash -s' < "${SCRIPT_DIR}/setup-vps.sh"
 
-# Copy SSH key to openclaw user
-ssh-copy-id -o StrictHostKeyChecking=no "openclaw@${VPS_IP}" 2>/dev/null || true
+# Copy SSH key to kryllbot user
+ssh-copy-id -o StrictHostKeyChecking=no "kryllbot@${VPS_IP}" 2>/dev/null || true
 
 # 5) Inject user config into .env and deploy
 echo "[5/5] Configuring and deploying..."
 
 # Update .env with user-provided values
-ssh -o StrictHostKeyChecking=no "openclaw@${VPS_IP}" bash -s <<REMOTE_DEPLOY
+ssh -o StrictHostKeyChecking=no "kryllbot@${VPS_IP}" bash -s <<REMOTE_DEPLOY
 set -euo pipefail
-cd ~/openclaw-vps
+cd ~/kryllbot-vps
 
 # Pull latest repo changes
 git pull --rebase origin main
@@ -156,8 +156,8 @@ fi
 if [[ -n "${TELEGRAM_ALLOWED_USER:-}" ]]; then
   sed -i "s|^TELEGRAM_ALLOWED_USER=.*|TELEGRAM_ALLOWED_USER=${TELEGRAM_ALLOWED_USER}|" .env
 fi
-if [[ -n "${OPENCLAW_AGENT_NAME:-}" ]]; then
-  sed -i "s|^OPENCLAW_AGENT_NAME=.*|OPENCLAW_AGENT_NAME=${OPENCLAW_AGENT_NAME}|" .env
+if [[ -n "${KRYLLBOT_AGENT_NAME:-}" ]]; then
+  sed -i "s|^KRYLLBOT_AGENT_NAME=.*|KRYLLBOT_AGENT_NAME=${KRYLLBOT_AGENT_NAME}|" .env
 fi
 
 # Run deploy

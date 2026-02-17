@@ -1,11 +1,11 @@
-# openclaw-vps
+# kryllbot-vps
 
-Docker images and deployment scripts for running [OpenClaw](https://github.com/openclaw/openclaw) on a VPS (Hostinger).
+Docker images and deployment scripts for running [KryllBot](https://kryll.io) on a VPS (Hostinger).
 
 ## Architecture
 
 - **Gateway image** (`ghcr.io/phlongere/openclaw-vps:latest`): Built from OpenClaw source, multi-arch (amd64/arm64)
-- **Sandbox browser** (`openclaw-sandbox-browser:bookworm-slim`): Chromium + noVNC for browser tool access
+- **Sandbox browser** (`kryllbot-sandbox-browser:bookworm-slim`): Chromium + noVNC for browser tool access
 - **SSH tunnels**: Secure access to Gateway UI and noVNC from your Mac
 
 ## Quick Start
@@ -19,7 +19,7 @@ sshpass -p 'ROOT_PASSWORD' ssh -o StrictHostKeyChecking=accept-new root@VPS_IP '
 ### 2. Deploy
 
 ```bash
-ssh openclaw@VPS_IP 'cd ~/openclaw-vps && bash scripts/deploy.sh'
+ssh kryllbot@VPS_IP 'cd ~/kryllbot-vps && bash scripts/deploy.sh'
 ```
 
 ### 3. Connect
@@ -33,7 +33,7 @@ bash scripts/connect.sh
 ## Updating
 
 ```bash
-ssh openclaw@VPS_IP 'cd ~/openclaw-vps && git pull && bash scripts/deploy.sh'
+ssh kryllbot@VPS_IP 'cd ~/kryllbot-vps && git pull && bash scripts/deploy.sh'
 ```
 
 ## Files

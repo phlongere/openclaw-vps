@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# OpenClaw VPS provisioning script
+# KryllBot VPS provisioning script
 # Run ONCE on a fresh VPS as root:
 #   sshpass -p 'PASSWORD' ssh root@VPS_IP 'bash -s' < scripts/setup-vps.sh
 #
@@ -7,9 +7,9 @@
 #   ssh root@VPS_IP 'bash -s' < scripts/setup-vps.sh
 set -euo pipefail
 
-OPENCLAW_USER="openclaw"
+KRYLLBOT_USER="kryllbot"
 
-echo "=== OpenClaw VPS Provisioning ==="
+echo "=== KryllBot VPS Provisioning ==="
 echo ""
 
 # 1) System update + base packages
@@ -27,35 +27,35 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
   ca-certificates curl git ufw sudo openssh-server
 
 # 2) Create dedicated user
-echo "[2/7] Creating user '${OPENCLAW_USER}'..."
-if id "${OPENCLAW_USER}" &>/dev/null; then
-  echo "  User '${OPENCLAW_USER}' already exists, skipping."
+echo "[2/7] Creating user '${KRYLLBOT_USER}'..."
+if id "${KRYLLBOT_USER}" &>/dev/null; then
+  echo "  User '${KRYLLBOT_USER}' already exists, skipping."
 else
-  useradd -m -s /bin/bash "${OPENCLAW_USER}"
-  usermod -aG sudo "${OPENCLAW_USER}"
+  useradd -m -s /bin/bash "${KRYLLBOT_USER}"
+  usermod -aG sudo "${KRYLLBOT_USER}"
   # No password login - SSH key only
-  passwd -l "${OPENCLAW_USER}"
+  passwd -l "${KRYLLBOT_USER}"
   echo "  User created."
 fi
 
-# Passwordless sudo for openclaw user
-echo "${OPENCLAW_USER} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${OPENCLAW_USER}
-chmod 440 /etc/sudoers.d/${OPENCLAW_USER}
+# Passwordless sudo for kryllbot user
+echo "${KRYLLBOT_USER} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${KRYLLBOT_USER}
+chmod 440 /etc/sudoers.d/${KRYLLBOT_USER}
 
 # 3) Copy SSH authorized keys from root to new user
 echo "[3/7] Setting up SSH keys..."
-OPENCLAW_HOME="/home/${OPENCLAW_USER}"
-mkdir -p "${OPENCLAW_HOME}/.ssh"
+KRYLLBOT_HOME="/home/${KRYLLBOT_USER}"
+mkdir -p "${KRYLLBOT_HOME}/.ssh"
 if [[ -f /root/.ssh/authorized_keys ]]; then
-  cp /root/.ssh/authorized_keys "${OPENCLAW_HOME}/.ssh/authorized_keys"
+  cp /root/.ssh/authorized_keys "${KRYLLBOT_HOME}/.ssh/authorized_keys"
 fi
 # Also add current Mac's public key if provided via env
 if [[ -n "${SSH_PUBLIC_KEY:-}" ]]; then
-  echo "${SSH_PUBLIC_KEY}" >> "${OPENCLAW_HOME}/.ssh/authorized_keys"
+  echo "${SSH_PUBLIC_KEY}" >> "${KRYLLBOT_HOME}/.ssh/authorized_keys"
 fi
-chmod 700 "${OPENCLAW_HOME}/.ssh"
-chmod 600 "${OPENCLAW_HOME}/.ssh/authorized_keys" 2>/dev/null || true
-chown -R "${OPENCLAW_USER}:${OPENCLAW_USER}" "${OPENCLAW_HOME}/.ssh"
+chmod 700 "${KRYLLBOT_HOME}/.ssh"
+chmod 600 "${KRYLLBOT_HOME}/.ssh/authorized_keys" 2>/dev/null || true
+chown -R "${KRYLLBOT_USER}:${KRYLLBOT_USER}" "${KRYLLBOT_HOME}/.ssh"
 
 # 4) Install Docker
 echo "[4/7] Installing Docker..."
@@ -69,7 +69,7 @@ else
   }
   echo "  Docker installed: $(docker --version)"
 fi
-usermod -aG docker "${OPENCLAW_USER}"
+usermod -aG docker "${KRYLLBOT_USER}"
 
 # Ensure Docker starts on boot
 systemctl enable docker
@@ -85,11 +85,11 @@ SYSCTL
 
 # 5) Create persistent directories
 echo "[5/7] Creating persistent directories..."
-mkdir -p "${OPENCLAW_HOME}/.openclaw"
-mkdir -p "${OPENCLAW_HOME}/.openclaw/workspace"
-mkdir -p "${OPENCLAW_HOME}/.openclaw/agents/main/agent"
+mkdir -p "${KRYLLBOT_HOME}/.openclaw"
+mkdir -p "${KRYLLBOT_HOME}/.openclaw/workspace"
+mkdir -p "${KRYLLBOT_HOME}/.openclaw/agents/main/agent"
 # Container runs as uid 1000 (node user)
-chown -R 1000:1000 "${OPENCLAW_HOME}/.openclaw"
+chown -R 1000:1000 "${KRYLLBOT_HOME}/.openclaw"
 
 # 6) Firewall
 echo "[6/7] Configuring firewall (ufw)..."
@@ -103,36 +103,36 @@ ufw --force enable
 echo "  Firewall enabled: SSH only."
 
 # 7) Clone deployment repo
-echo "[7/7] Cloning openclaw-vps deployment repo..."
-DEPLOY_DIR="${OPENCLAW_HOME}/openclaw-vps"
+echo "[7/7] Cloning kryllbot-vps deployment repo..."
+DEPLOY_DIR="${KRYLLBOT_HOME}/kryllbot-vps"
 if [[ -d "${DEPLOY_DIR}" ]]; then
   echo "  Repo already exists at ${DEPLOY_DIR}, pulling latest..."
   cd "${DEPLOY_DIR}" && git pull --rebase
 else
   git clone https://github.com/phlongere/openclaw-vps.git "${DEPLOY_DIR}"
 fi
-chown -R "${OPENCLAW_USER}:${OPENCLAW_USER}" "${DEPLOY_DIR}"
+chown -R "${KRYLLBOT_USER}:${KRYLLBOT_USER}" "${DEPLOY_DIR}"
 
 # Generate .env if not exists
 ENV_FILE="${DEPLOY_DIR}/.env"
 if [[ ! -f "${ENV_FILE}" ]]; then
   GATEWAY_TOKEN="$(openssl rand -hex 32)"
   cat > "${ENV_FILE}" <<EOF
-OPENCLAW_IMAGE=ghcr.io/phlongere/openclaw-vps:latest
-OPENCLAW_GATEWAY_TOKEN=${GATEWAY_TOKEN}
-OPENCLAW_GATEWAY_BIND=lan
-OPENCLAW_GATEWAY_PORT=18789
-OPENCLAW_BRIDGE_PORT=18790
-OPENCLAW_CONFIG_DIR=${OPENCLAW_HOME}/.openclaw
-OPENCLAW_WORKSPACE_DIR=${OPENCLAW_HOME}/.openclaw/workspace
+KRYLLBOT_IMAGE=ghcr.io/phlongere/openclaw-vps:latest
+KRYLLBOT_GATEWAY_TOKEN=${GATEWAY_TOKEN}
+KRYLLBOT_GATEWAY_BIND=lan
+KRYLLBOT_GATEWAY_PORT=18789
+KRYLLBOT_BRIDGE_PORT=18790
+KRYLLBOT_CONFIG_DIR=${KRYLLBOT_HOME}/.openclaw
+KRYLLBOT_WORKSPACE_DIR=${KRYLLBOT_HOME}/.openclaw/workspace
 
 # === User config (set before running deploy.sh) ===
-OPENCLAW_AGENT_NAME=Assistant
+KRYLLBOT_AGENT_NAME=Assistant
 OPENAI_API_KEY=change-me
 TELEGRAM_BOT_TOKEN=change-me
 TELEGRAM_ALLOWED_USER=change-me
 EOF
-  chown "${OPENCLAW_USER}:${OPENCLAW_USER}" "${ENV_FILE}"
+  chown "${KRYLLBOT_USER}:${KRYLLBOT_USER}" "${ENV_FILE}"
   echo ""
   echo "=== Gateway token (save this!) ==="
   echo "${GATEWAY_TOKEN}"
@@ -144,10 +144,10 @@ echo "=== Provisioning complete ==="
 echo ""
 echo "VPS is ready. Next steps:"
 echo "  1. From your Mac, add your SSH key:"
-echo "     ssh-copy-id ${OPENCLAW_USER}@$(hostname -I | awk '{print $1}')"
+echo "     ssh-copy-id ${KRYLLBOT_USER}@$(hostname -I | awk '{print $1}')"
 echo ""
-echo "  2. Deploy OpenClaw:"
-echo "     ssh ${OPENCLAW_USER}@$(hostname -I | awk '{print $1}') 'cd ~/openclaw-vps && bash scripts/deploy.sh'"
+echo "  2. Deploy KryllBot:"
+echo "     ssh ${KRYLLBOT_USER}@$(hostname -I | awk '{print $1}') 'cd ~/kryllbot-vps && bash scripts/deploy.sh'"
 echo ""
 echo "  3. Connect from your Mac:"
 echo "     bash scripts/connect.sh"
