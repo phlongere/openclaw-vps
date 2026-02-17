@@ -107,6 +107,7 @@ echo "[7/7] Cloning kryllbot-vps deployment repo..."
 DEPLOY_DIR="${KRYLLBOT_HOME}/kryllbot-vps"
 if [[ -d "${DEPLOY_DIR}" ]]; then
   echo "  Repo already exists at ${DEPLOY_DIR}, pulling latest..."
+  git config --global --add safe.directory "${DEPLOY_DIR}"
   cd "${DEPLOY_DIR}" && git pull --rebase
 else
   git clone https://github.com/phlongere/openclaw-vps.git "${DEPLOY_DIR}"
