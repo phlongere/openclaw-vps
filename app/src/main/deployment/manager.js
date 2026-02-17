@@ -330,11 +330,11 @@ echo "Post-snapshot setup complete (user: \$DEPLOY_USER)"
       const container = gatewayResult.stdout.trim();
       if (!container) return;
 
-      // Write each file into the workspace inside the container
+      // Write each file into the workspace inside the container (base64 to avoid shell escaping issues)
       for (const [file, content] of Object.entries(templates)) {
-        const escaped = content.replace(/'/g, "'\\''");
+        const b64 = Buffer.from(content).toString('base64');
         await this.sshUser.exec(
-          `docker exec ${container} sh -c 'cat > /home/node/.openclaw/workspace/${file}' <<'WSEOF'\n${content}\nWSEOF`
+          `echo '${b64}' | base64 -d | docker exec -i ${container} sh -c 'cat > /home/node/.openclaw/workspace/${file}'`
         );
       }
 
