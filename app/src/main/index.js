@@ -57,7 +57,9 @@ ipcMain.handle('config:devDefaults', async () => {
     llmProvider: env.LLM_PROVIDER || '',
     apiKey: env.API_KEY || '',
     telegramToken: env.TELEGRAM_TOKEN || '',
-    telegramUserId: env.TELEGRAM_USER_ID || ''
+    telegramUserId: env.TELEGRAM_USER_ID || '',
+    userName: env.USER_NAME || '',
+    userLanguage: env.USER_LANGUAGE || 'fr'
   };
 });
 

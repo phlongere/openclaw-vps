@@ -198,6 +198,9 @@ echo "Post-snapshot setup complete (user: \$DEPLOY_USER)"
 
         // Inject browser CDP config for sandbox-browser container
         await this.configureBrowserCDP();
+
+        // Inject workspace starter files (IDENTITY.md, USER.md, SOUL.md, AGENTS.md)
+        await this.injectWorkspaceFiles(config);
       });
 
       // Step 5: Tunnel
@@ -292,6 +295,53 @@ echo "Post-snapshot setup complete (user: \$DEPLOY_USER)"
 
   sleep(ms) {
     return new Promise(r => setTimeout(r, ms));
+  }
+
+  async injectWorkspaceFiles(config) {
+    try {
+      const { agentName, userName, userLanguage } = config;
+      const lang = userLanguage || 'fr';
+      const languages = lang === 'fr' ? 'Francais + English' : 'English + Francais';
+      const userLangs = lang === 'fr' ? 'Francais (primary), English (fluent)' : 'English (primary), Francais (fluent)';
+
+      // Read template files from workspace-starter/
+      const starterDir = path.join(this.scriptsRoot, 'workspace-starter');
+      const templates = {};
+      for (const file of ['IDENTITY.md', 'USER.md', 'SOUL.md', 'AGENTS.md']) {
+        const filePath = path.join(starterDir, file);
+        if (fs.existsSync(filePath)) {
+          templates[file] = fs.readFileSync(filePath, 'utf-8')
+            .replace(/\{\{BOT_NAME\}\}/g, agentName || 'Assistant')
+            .replace(/\{\{USER_NAME\}\}/g, userName || 'User')
+            .replace(/\{\{LANGUAGES\}\}/g, languages)
+            .replace(/\{\{USER_LANGUAGES\}\}/g, userLangs);
+        }
+      }
+
+      if (Object.keys(templates).length === 0) {
+        this.log('No workspace starter templates found, skipping');
+        return;
+      }
+
+      // Find gateway container
+      const gatewayResult = await this.sshUser.exec(
+        `cd ~/${this.repoDir} && docker compose ps --format '{{.Name}}' 2>/dev/null | grep gateway | head -1`
+      );
+      const container = gatewayResult.stdout.trim();
+      if (!container) return;
+
+      // Write each file into the workspace inside the container
+      for (const [file, content] of Object.entries(templates)) {
+        const escaped = content.replace(/'/g, "'\\''");
+        await this.sshUser.exec(
+          `docker exec ${container} sh -c 'cat > /home/node/.openclaw/workspace/${file}' <<'WSEOF'\n${content}\nWSEOF`
+        );
+      }
+
+      this.log(`Workspace files injected (${Object.keys(templates).length} files)`);
+    } catch (err) {
+      this.log(`Workspace injection skipped: ${err.message}`);
+    }
   }
 
   async configureBrowserCDP() {
