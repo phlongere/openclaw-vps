@@ -117,6 +117,10 @@ sudo tee "${AGENT_DIR}/auth-profiles.json" > /dev/null <<AUTHJSON
 }
 AUTHJSON
 
+# Ensure workspace dir exists
+WORKSPACE_DIR="${OPENCLAW_WORKSPACE_DIR:-/home/openclaw/.openclaw/workspace}"
+sudo mkdir -p "${WORKSPACE_DIR}"
+
 # Fix ownership (container runs as uid 1000 = node)
 sudo chown -R 1000:1000 "${CONFIG_DIR}"
 
